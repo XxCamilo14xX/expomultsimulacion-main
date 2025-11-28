@@ -968,7 +968,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Actions: {fileID: -944628639613478452, guid: b039139a8b18730478a752ddd0f31038, type: 3}
-  m_NotificationBehavior: 2
+  m_NotificationBehavior: 3
   m_UIInputModule: {fileID: 0}
   m_DeviceLostEvent:
     m_PersistentCalls:
@@ -1124,6 +1124,22 @@ MonoBehaviour:
         m_CallState: 2
     m_ActionId: b0d256fa-cc8c-4a22-925d-479ad7049947
     m_ActionName: 'Plane/ToggleAI[/Keyboard/space]'
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: a601469b-e3aa-422a-806a-4f7dcba55333
+    m_ActionName: 'Spaceship/Move[/XInputControllerWindows/leftStick,/Keyboard/w,/Keyboard/s,/Keyboard/a,/Keyboard/d]'
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 0d46f8f2-2f6f-4fe2-8623-427c869c3bdf
+    m_ActionName: 'Spaceship/Vertical[/XInputControllerWindows/leftShoulder,/XInputControllerWindows/rightShoulder,/Keyboard/leftShift,/Keyboard/space]'
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 7173b259-7215-456e-ba7f-dba1aaad27e2
+    m_ActionName: 'Spaceship/Look[/XInputControllerWindows/rightStick,/Mouse/delta]'
+  - m_PersistentCalls:
+      m_Calls: []
+    m_ActionId: 56c160cd-3545-4284-abef-8d6eb62ab74d
+    m_ActionName: 'Spaceship/Roll[/XInputControllerWindows/leftTrigger,/XInputControllerWindows/rightTrigger,/Keyboard/q,/Keyboard/e]'
   m_NeverAutoSwitchControlSchemes: 0
   m_DefaultControlScheme: 
   m_DefaultActionMap: Plane

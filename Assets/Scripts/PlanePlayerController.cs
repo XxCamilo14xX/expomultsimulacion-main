@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
+[RequireComponent(typeof(PlayerInput))]
 public class PlanePlayerController : MonoBehaviour {
     [SerializeField]
     new Camera camera;
@@ -18,6 +19,11 @@ public class PlanePlayerController : MonoBehaviour {
     void Start() {
         planeCamera = GetComponent<PlaneCamera>();
         SetPlane(plane);    //SetPlane if var is set in inspector
+
+        var pInput = GetComponent<PlayerInput>();
+        if (pInput != null && pInput.actions != null) {
+            pInput.SwitchCurrentActionMap("Plane");
+        }
     }
 
     void SetPlane(Plane plane) {
@@ -101,9 +107,68 @@ public class PlanePlayerController : MonoBehaviour {
         }
     }
 
+    public void OnRestartGame(InputAction.CallbackContext context) {
+        if (plane == null) return;
+
+        if (context.phase == InputActionPhase.Performed && plane.Dead) {
+            UnityEngine.SceneManagement.SceneManager.LoadScene(
+                UnityEngine.SceneManagement.SceneManager.GetActiveScene().name
+            );
+        }
+    }
+
+    public void OnExitToMenu(InputAction.CallbackContext context) {
+        if (plane == null) return;
+
+        if (context.phase == InputActionPhase.Performed && plane.Dead) {
+            // Return to desktop scene
+            UnityEngine.SceneManagement.SceneManager.LoadScene("Windowsescritorio");
+        }
+    }
+
+    void OnEnable() {
+        var pInput = GetComponent<PlayerInput>();
+        if (pInput != null) {
+            pInput.onActionTriggered += HandleInput;
+            if (pInput.actions != null) {
+                pInput.SwitchCurrentActionMap("Plane");
+            }
+        }
+    }
+
+    void OnDisable() {
+        var pInput = GetComponent<PlayerInput>();
+        if (pInput != null) {
+            pInput.onActionTriggered -= HandleInput;
+        }
+    }
+
+    void HandleInput(InputAction.CallbackContext context) {
+        if (plane == null) {
+            Debug.LogError("Plane reference is missing in PlanePlayerController!");
+            return;
+        }
+
+        // Debug.Log($"Input received: {context.action.name} - {context.phase}");
+
+        switch (context.action.name) {
+            case "Throttle": SetThrottleInput(context); break;
+            case "RollPitch": OnRollPitchInput(context); break;
+            case "Yaw": OnYawInput(context); break;
+            case "Camera": OnCameraInput(context); break;
+            case "ToggleFlaps": OnFlapsInput(context); break;
+            case "FireMissile": OnFireMissile(context); break;
+            case "FireCannon": OnFireCannon(context); break;
+            case "ToggleAI": OnToggleAI(context); break;
+            case "ToggleHelp": OnToggleHelp(context); break;
+            case "RestartGame": OnRestartGame(context); break;
+            case "ExitToMenu": OnExitToMenu(context); break;
+        }
+    }
+
     void Update() {
         if (plane == null) return;
-        if (aiController.enabled) return;
+        if (aiController != null && aiController.enabled) return;
 
         plane.SetControlInput(controlInput);
     }

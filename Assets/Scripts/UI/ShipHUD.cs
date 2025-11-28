@@ -59,13 +59,14 @@ public class ShipHUD : MonoBehaviour {
                 lockOnUI.DrawLockOnUI (aimedBody, false);
             }
 
-            if (Input.GetMouseButtonDown (0)) {
-                if (lockedBody == aimedBody) {
-                    lockedBody = null;
-                } else {
-                    lockedBody = aimedBody;
-                }
-            }
+            // Mouse click logic removed in favor of Input System action
+            // if (Input.GetMouseButtonDown (0)) {
+            //     if (lockedBody == aimedBody) {
+            //         lockedBody = null;
+            //     } else {
+            //         lockedBody = aimedBody;
+            //     }
+            // }
 
             if (lockedBody) {
                 lockOnUI.DrawLockOnUI (lockedBody, true);
@@ -249,6 +250,15 @@ public class ShipHUD : MonoBehaviour {
         public void SetActive (bool active) {
             line.gameObject.SetActive (active);
             head.gameObject.SetActive (active);
+        }
+    }
+
+    public void ToggleLock() {
+        CelestialBody aimedBody = FindAimedBody();
+        if (lockedBody == aimedBody) {
+            lockedBody = null;
+        } else {
+            lockedBody = aimedBody;
         }
     }
 }

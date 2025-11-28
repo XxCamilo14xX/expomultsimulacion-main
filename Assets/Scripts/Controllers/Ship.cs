@@ -1,7 +1,9 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
+[RequireComponent(typeof(PlayerInput))]
 public class Ship : GravityObject {
 
     public Transform hatch;
@@ -30,6 +32,7 @@ public class Ship : GravityObject {
     int numCollisionTouches;
     bool hatchOpen;
 
+    // Legacy keys
     KeyCode ascendKey = KeyCode.Space;
     KeyCode descendKey = KeyCode.LeftShift;
     KeyCode rollCounterKey = KeyCode.Q;
@@ -38,6 +41,12 @@ public class Ship : GravityObject {
     KeyCode backwardKey = KeyCode.S;
     KeyCode leftKey = KeyCode.A;
     KeyCode rightKey = KeyCode.D;
+
+    // Input System values
+    Vector2 inputMove;
+    float inputVertical;
+    Vector2 inputLook;
+    float inputRoll;
 
     void Awake () {
         InitRigidbody ();
@@ -48,6 +57,62 @@ public class Ship : GravityObject {
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
         }
+    }
+
+    void OnEnable() {
+        var pInput = GetComponent<PlayerInput>();
+        if (pInput != null) {
+            pInput.onActionTriggered += HandleInput;
+        }
+    }
+
+    void OnDisable() {
+        var pInput = GetComponent<PlayerInput>();
+        if (pInput != null) {
+            pInput.onActionTriggered -= HandleInput;
+        }
+    }
+
+    void HandleInput(InputAction.CallbackContext context) {
+        // Debug.Log($"Ship Input: {context.action.name}");
+
+        switch (context.action.name) {
+            case "Move": 
+                if (shipIsPiloted) inputMove = context.ReadValue<Vector2>(); 
+                break;
+            case "Vertical": 
+                if (shipIsPiloted) inputVertical = context.ReadValue<float>(); 
+                break;
+            case "Look": 
+                if (shipIsPiloted) inputLook = context.ReadValue<Vector2>(); 
+                break;
+            case "Roll": 
+                if (shipIsPiloted) inputRoll = context.ReadValue<float>(); 
+                break;
+            case "ToggleHatch": 
+                if (context.performed) ToggleHatch(); 
+                break;
+            case "ExitSeat": 
+                if (context.performed && shipIsPiloted) StopPilotingShip(); 
+                break;
+            case "SelectPlanet": 
+                if (context.performed && shipIsPiloted) OnSelectPlanet(); 
+                break;
+            case "ExitToDesktop":
+                if (context.performed) OnExitToDesktop();
+                break;
+        }
+    }
+
+    void OnSelectPlanet() {
+        var shipHUD = FindObjectOfType<ShipHUD>();
+        if (shipHUD != null) {
+            shipHUD.ToggleLock();
+        }
+    }
+
+    void OnExitToDesktop() {
+        UnityEngine.SceneManagement.SceneManager.LoadScene("Windowsescritorio");
     }
 
     void Update () {
@@ -62,16 +127,29 @@ public class Ship : GravityObject {
 
     void HandleMovement () {
         DebugHelper.HandleEditorInput (lockCursor);
+        
         // Thruster input
-        int thrustInputX = GetInputAxis (leftKey, rightKey);
-        int thrustInputY = GetInputAxis (descendKey, ascendKey);
-        int thrustInputZ = GetInputAxis (backwardKey, forwardKey);
-        thrusterInput = new Vector3 (thrustInputX, thrustInputY, thrustInputZ);
+        // Combine legacy keyboard with new input system
+        float thrustX = inputMove.x;
+        if (thrustX == 0) thrustX = GetInputAxis (leftKey, rightKey);
+
+        float thrustY = inputVertical;
+        if (thrustY == 0) thrustY = GetInputAxis (descendKey, ascendKey);
+
+        float thrustZ = inputMove.y;
+        if (thrustZ == 0) thrustZ = GetInputAxis (backwardKey, forwardKey);
+
+        thrusterInput = new Vector3 (thrustX, thrustY, thrustZ);
 
         // Rotation input
-        float yawInput = Input.GetAxisRaw ("Mouse X") * rotSpeed;
-        float pitchInput = Input.GetAxisRaw ("Mouse Y") * rotSpeed;
-        float rollInput = GetInputAxis (rollCounterKey, rollClockwiseKey) * rollSpeed * Time.deltaTime;
+        float yawInput = inputLook.x * rotSpeed;
+        if (yawInput == 0) yawInput = Input.GetAxisRaw ("Mouse X") * rotSpeed;
+
+        float pitchInput = inputLook.y * rotSpeed;
+        if (pitchInput == 0) pitchInput = Input.GetAxisRaw ("Mouse Y") * rotSpeed;
+
+        float rollInput = inputRoll * rollSpeed * Time.deltaTime;
+        if (rollInput == 0) rollInput = GetInputAxis (rollCounterKey, rollClockwiseKey) * rollSpeed * Time.deltaTime;
 
         // Calculate rotation
         if (numCollisionTouches == 0) {
@@ -142,6 +220,10 @@ public class Ship : GravityObject {
         pilot.gameObject.SetActive (false);
         hatchOpen = false;
 
+        var pInput = GetComponent<PlayerInput>();
+        if (pInput != null && pInput.actions != null) {
+            pInput.SwitchCurrentActionMap("Spaceship");
+        }
     }
 
     void StopPilotingShip () {
@@ -151,6 +233,11 @@ public class Ship : GravityObject {
         pilot.Rigidbody.linearVelocity = rb.linearVelocity;
         pilot.gameObject.SetActive (true);
         pilot.ExitFromSpaceship ();
+        
+        var pInput = GetComponent<PlayerInput>();
+        if (pInput != null && pInput.actions != null) {
+            pInput.SwitchCurrentActionMap("Plane");
+        }
     }
 
     void OnCollisionEnter (Collision other) {
